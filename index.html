@@ -16,7 +16,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
@@ -26,7 +26,7 @@
             padding: 60px 40px;
             border-radius: 10px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 500px;
+            max-width: 520px;
             width: 100%;
         }
 
@@ -39,7 +39,7 @@
         .buttons {
             display: flex;
             justify-content: space-around;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
         button {
@@ -48,7 +48,11 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: transform 0.1s, background-color 0.3s;
+        }
+
+        button:active {
+            transform: scale(0.95);
         }
 
         .yes {
@@ -56,26 +60,99 @@
             color: white;
         }
 
-        .yes:hover {
-            background-color: #45a049;
-        }
+        .yes:hover { background-color: #45a049; }
 
         .no {
             background-color: #f44336;
             color: white;
         }
 
-        .no:hover {
-            background-color: #da190b;
+        .no:hover { background-color: #da190b; }
+
+        /* ── Meter ── */
+        .meter-section {
+            margin-top: 10px;
         }
 
-        .results {
-            font-size: 1.2em;
-            color: #666;
+        .meter-label {
+            font-size: 1em;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 12px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
         }
 
-        .results p {
-            margin-bottom: 10px;
+        .meter-wrap {
+            position: relative;
+            width: 100%;
+            height: 48px;
+            background: #eee;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 3px solid #ccc;
+            box-shadow: inset 0 3px 8px rgba(0,0,0,0.15);
+        }
+
+        .meter-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #f44336 0%, #ff9800 40%, #ffeb3b 65%, #4CAF50 100%);
+            background-size: 520px 100%;
+            border-radius: 24px;
+            transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+
+        .meter-fill::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 8px;
+            right: 8px;
+            height: 40%;
+            background: rgba(255,255,255,0.3);
+            border-radius: 10px;
+        }
+
+        .meter-needle {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 6px;
+            height: 60px;
+            background: #222;
+            border-radius: 3px;
+            transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            left: 0%;
+            z-index: 2;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+
+        .meter-ends {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.8em;
+            font-weight: 700;
+            color: #888;
+        }
+
+        .meter-ends .end-no  { color: #f44336; }
+        .meter-ends .end-yes { color: #4CAF50; }
+
+        .verdict {
+            margin-top: 20px;
+            font-size: 1.4em;
+            font-weight: 700;
+            min-height: 1.8em;
+            transition: color 0.5s;
+        }
+
+        .vote-tally {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #aaa;
         }
     </style>
 </head>
@@ -86,18 +163,60 @@
             <button class="yes" onclick="vote('yes')">Yes</button>
             <button class="no" onclick="vote('no')">No</button>
         </div>
-        <div class="results">
-            <p>Yes votes: <span id="yes-count">0</span></p>
-            <p>No votes: <span id="no-count">0</span></p>
+
+        <div class="meter-section">
+            <div class="meter-label">Richard-o-meter</div>
+            <div class="meter-wrap">
+                <div class="meter-fill" id="meter-fill"></div>
+                <div class="meter-needle" id="meter-needle"></div>
+            </div>
+            <div class="meter-ends">
+                <span class="end-no">Chained to desk</span>
+                <span class="end-yes">FREE AT LAST</span>
+            </div>
+            <div class="verdict" id="verdict"></div>
+            <div class="vote-tally" id="tally"></div>
         </div>
     </div>
 
     <script>
         let votes = JSON.parse(localStorage.getItem('votes')) || { yes: 0, no: 0 };
 
+        const verdicts = [
+            { threshold: 0,   text: "No data. Assume he's working.",         color: "#f44336" },
+            { threshold: 10,  text: "Almost certainly at his desk. Sorry.",  color: "#e53935" },
+            { threshold: 25,  text: "Outlook: bleak. Very bleak.",           color: "#ff7043" },
+            { threshold: 40,  text: "Signs of hope. Very faint signs.",      color: "#ff9800" },
+            { threshold: 55,  text: "Could go either way. Classic Richard.", color: "#ffc107" },
+            { threshold: 70,  text: "Looking promising!",                    color: "#8bc34a" },
+            { threshold: 85,  text: "Almost certainly free! Celebrate!",     color: "#4CAF50" },
+            { threshold: 95,  text: "HE'S OFF. PARTY TIME.",                 color: "#2e7d32" },
+        ];
+
+        function getVerdict(pct) {
+            let result = verdicts[0];
+            for (const v of verdicts) {
+                if (pct >= v.threshold) result = v;
+            }
+            return result;
+        }
+
         function updateDisplay() {
-            document.getElementById('yes-count').textContent = votes.yes;
-            document.getElementById('no-count').textContent = votes.no;
+            const total = votes.yes + votes.no;
+            const pct = total === 0 ? 0 : Math.round((votes.yes / total) * 100);
+
+            document.getElementById('meter-fill').style.width = pct + '%';
+            document.getElementById('meter-needle').style.left = pct + '%';
+
+            const v = getVerdict(pct);
+            const verdictEl = document.getElementById('verdict');
+            verdictEl.textContent = v.text;
+            verdictEl.style.color = v.color;
+
+            document.getElementById('tally').textContent =
+                total === 0
+                    ? 'No votes yet — be the first!'
+                    : `${votes.yes} yes · ${votes.no} no · ${pct}% freedom`;
         }
 
         function vote(option) {
