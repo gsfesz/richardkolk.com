@@ -18,9 +18,49 @@
             align-items: center;
             min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
         }
 
+        /* ── Background layer ── */
+        #bg-layer {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-item {
+            position: absolute;
+            user-select: none;
+        }
+
+        .bg-item img {
+            display: block;
+        }
+
+        /* Geese: wrapper translates left → right */
+        @keyframes fly-right {
+            from { transform: translateX(-300px); }
+            to   { transform: translateX(calc(100vw + 300px)); }
+        }
+
+        /* Jets: wrapper translates right → left */
+        @keyframes fly-left {
+            from { transform: translateX(calc(100vw + 300px)); }
+            to   { transform: translateX(-300px); }
+        }
+
+        /* Flags: drift upward and fade out */
+        @keyframes float-up {
+            0%   { transform: translateY(0)      rotate(-4deg); opacity: 1;   }
+            50%  { transform: translateY(-45vh)  rotate(4deg);  opacity: 0.9; }
+            100% { transform: translateY(-115vh) rotate(-2deg); opacity: 0;   }
+        }
+
+        /* ── Main card ── */
         .container {
+            position: relative;
+            z-index: 1;
             text-align: center;
             background: white;
             padding: 60px 40px;
@@ -51,28 +91,16 @@
             transition: transform 0.1s, background-color 0.3s;
         }
 
-        button:active {
-            transform: scale(0.95);
-        }
+        button:active { transform: scale(0.95); }
 
-        .yes {
-            background-color: #4CAF50;
-            color: white;
-        }
-
+        .yes { background-color: #4CAF50; color: white; }
         .yes:hover { background-color: #45a049; }
 
-        .no {
-            background-color: #f44336;
-            color: white;
-        }
-
+        .no { background-color: #f44336; color: white; }
         .no:hover { background-color: #da190b; }
 
         /* ── Meter ── */
-        .meter-section {
-            margin-top: 10px;
-        }
+        .meter-section { margin-top: 10px; }
 
         .meter-label {
             font-size: 1em;
@@ -135,7 +163,6 @@
             margin-top: 8px;
             font-size: 0.8em;
             font-weight: 700;
-            color: #888;
         }
 
         .meter-ends .end-no  { color: #f44336; }
@@ -157,6 +184,9 @@
     </style>
 </head>
 <body>
+
+    <div id="bg-layer"></div>
+
     <div class="container">
         <h1>Will Richard be off work?</h1>
         <div class="buttons">
@@ -180,39 +210,35 @@
     </div>
 
     <script>
+        // ── Voting ────────────────────────────────────────────────
         let votes = JSON.parse(localStorage.getItem('votes')) || { yes: 0, no: 0 };
 
         const verdicts = [
-            { threshold: 0,   text: "No data. Assume he's working.",         color: "#f44336" },
-            { threshold: 10,  text: "Almost certainly at his desk. Sorry.",  color: "#e53935" },
-            { threshold: 25,  text: "Outlook: bleak. Very bleak.",           color: "#ff7043" },
-            { threshold: 40,  text: "Signs of hope. Very faint signs.",      color: "#ff9800" },
-            { threshold: 55,  text: "Could go either way. Classic Richard.", color: "#ffc107" },
-            { threshold: 70,  text: "Looking promising!",                    color: "#8bc34a" },
-            { threshold: 85,  text: "Almost certainly free! Celebrate!",     color: "#4CAF50" },
-            { threshold: 95,  text: "HE'S OFF. PARTY TIME.",                 color: "#2e7d32" },
+            { threshold: 0,  text: "No data. Assume he's working.",         color: "#f44336" },
+            { threshold: 10, text: "Almost certainly at his desk. Sorry.",  color: "#e53935" },
+            { threshold: 25, text: "Outlook: bleak. Very bleak.",           color: "#ff7043" },
+            { threshold: 40, text: "Signs of hope. Very faint signs.",      color: "#ff9800" },
+            { threshold: 55, text: "Could go either way. Classic Richard.", color: "#ffc107" },
+            { threshold: 70, text: "Looking promising!",                    color: "#8bc34a" },
+            { threshold: 85, text: "Almost certainly free! Celebrate!",     color: "#4CAF50" },
+            { threshold: 95, text: "HE'S OFF. PARTY TIME.",                 color: "#2e7d32" },
         ];
 
         function getVerdict(pct) {
             let result = verdicts[0];
-            for (const v of verdicts) {
-                if (pct >= v.threshold) result = v;
-            }
+            for (const v of verdicts) { if (pct >= v.threshold) result = v; }
             return result;
         }
 
         function updateDisplay() {
             const total = votes.yes + votes.no;
             const pct = total === 0 ? 0 : Math.round((votes.yes / total) * 100);
-
             document.getElementById('meter-fill').style.width = pct + '%';
             document.getElementById('meter-needle').style.left = pct + '%';
-
             const v = getVerdict(pct);
             const verdictEl = document.getElementById('verdict');
             verdictEl.textContent = v.text;
             verdictEl.style.color = v.color;
-
             document.getElementById('tally').textContent =
                 total === 0
                     ? 'No votes yet — be the first!'
@@ -226,6 +252,74 @@
         }
 
         updateDisplay();
+
+        // ── Background critters ───────────────────────────────────
+        const bg = document.getElementById('bg-layer');
+        function rand(min, max) { return Math.random() * (max - min) + min; }
+
+        function spawnGoose() {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'bg-item';
+            const duration = rand(12, 20);
+            const top      = rand(5, 88);
+            wrapper.style.cssText = `top:${top}vh; animation:fly-right ${duration}s linear forwards;`;
+
+            const img = document.createElement('img');
+            img.src = 'goose.png';
+            // rotate so it looks like it's leaning into flight
+            img.style.cssText = `width:${rand(80, 160)}px; transform:rotate(-30deg);`;
+
+            wrapper.appendChild(img);
+            bg.appendChild(wrapper);
+            wrapper.addEventListener('animationend', () => wrapper.remove());
+        }
+
+        function spawnJet() {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'bg-item';
+            const duration = rand(5, 9);
+            const top      = rand(5, 82);
+            wrapper.style.cssText = `top:${top}vh; animation:fly-left ${duration}s linear forwards;`;
+
+            const img = document.createElement('img');
+            img.src = 'jet.png';
+            // flip horizontally so jet faces the direction it's flying
+            img.style.cssText = `width:${rand(130, 240)}px; transform:scaleX(-1);`;
+
+            wrapper.appendChild(img);
+            bg.appendChild(wrapper);
+            wrapper.addEventListener('animationend', () => wrapper.remove());
+        }
+
+        function spawnFlag() {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'bg-item';
+            const duration = rand(10, 18);
+            const left     = rand(2, 93);
+            wrapper.style.cssText = `bottom:-160px; left:${left}vw; animation:float-up ${duration}s ease-in forwards;`;
+
+            const img = document.createElement('img');
+            img.src = 'flag.png';
+            img.style.cssText = `width:${rand(90, 160)}px;`;
+
+            wrapper.appendChild(img);
+            bg.appendChild(wrapper);
+            wrapper.addEventListener('animationend', () => wrapper.remove());
+        }
+
+        // Spawn rates — staggered so page doesn't explode on load
+        function scheduleGoose() { spawnGoose(); setTimeout(scheduleGoose, rand(1800, 3500)); }
+        function scheduleJet()   { spawnJet();   setTimeout(scheduleJet,   rand(2500, 5500)); }
+        function scheduleFlag()  { spawnFlag();  setTimeout(scheduleFlag,  rand(1000, 2500)); }
+
+        scheduleGoose();
+        setTimeout(scheduleJet,  800);
+        setTimeout(scheduleFlag, 400);
+
+        // Seed a few extras immediately so the page isn't empty on first load
+        for (let i = 0; i < 3; i++) setTimeout(spawnGoose, i * 600);
+        for (let i = 0; i < 2; i++) setTimeout(spawnJet,   i * 1200);
+        for (let i = 0; i < 4; i++) setTimeout(spawnFlag,  i * 400);
     </script>
 </body>
 </html>
