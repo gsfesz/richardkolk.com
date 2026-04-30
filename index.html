@@ -15,10 +15,11 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            overflow: hidden;
+            overflow-x: hidden;
+            padding: 40px 16px;
         }
 
         /* ── Background layer ── */
@@ -211,6 +212,39 @@
             border-left: 4px solid #ff9800;
             font-size: 1em;
             color: #333;
+        }
+
+        /* ── Mobile ── */
+        @media (max-width: 540px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .container {
+                padding: 36px 20px;
+            }
+
+            h1 {
+                font-size: 1.7em;
+                margin-bottom: 22px;
+            }
+
+            button {
+                padding: 14px 22px;
+                font-size: 1.05em;
+            }
+
+            .verdict {
+                font-size: 1.15em;
+            }
+
+            .meter-ends {
+                font-size: 0.72em;
+            }
+
+            .food-journal h2 {
+                font-size: 0.95em;
+            }
         }
     </style>
 </head>
