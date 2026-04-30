@@ -181,6 +181,37 @@
             font-size: 0.9em;
             color: #aaa;
         }
+
+        /* ── Food Journal ── */
+        .food-journal {
+            margin-top: 36px;
+            text-align: left;
+            border-top: 2px dashed #eee;
+            padding-top: 24px;
+        }
+
+        .food-journal h2 {
+            font-size: 1.1em;
+            color: #555;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .food-journal ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .food-journal ul li {
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            border-left: 4px solid #ff9800;
+            font-size: 1em;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -206,6 +237,16 @@
             </div>
             <div class="verdict" id="verdict"></div>
             <div class="vote-tally" id="tally"></div>
+        </div>
+
+        <div class="food-journal">
+            <h2>Richard's Food Journal (for his doctor)</h2>
+            <ul>
+                <li>Wendy's</li>
+                <li>Jimmy Johns</li>
+                <li>Yorktown</li>
+                <li>McDonald's</li>
+            </ul>
         </div>
     </div>
 
@@ -266,7 +307,6 @@
 
             const img = document.createElement('img');
             img.src = 'goose.png';
-            // rotate so it looks like it's leaning into flight
             img.style.cssText = `width:${rand(80, 160)}px; transform:rotate(-30deg);`;
 
             wrapper.appendChild(img);
@@ -283,7 +323,6 @@
 
             const img = document.createElement('img');
             img.src = 'jet.png';
-            // flip horizontally so jet faces the direction it's flying
             img.style.cssText = `width:${rand(130, 240)}px; transform:scaleX(-1);`;
 
             wrapper.appendChild(img);
